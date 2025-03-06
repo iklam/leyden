@@ -202,7 +202,7 @@ module java.base {
         jdk.jfr;
     exports jdk.internal.org.xml.sax.helpers to
         jdk.jfr;
-    exports jdk.internal.misc to
+    exports jdk.internal.misc /* to
         java.desktop,
         java.logging,
         java.management,
@@ -220,7 +220,7 @@ module java.base {
         jdk.nio.mapmode,
         jdk.unsupported,
         jdk.internal.vm.ci,
-        jdk.graal.compiler;
+        jdk.graal.compiler */;
     exports jdk.internal.module to
         java.instrument,
         java.management.rmi,

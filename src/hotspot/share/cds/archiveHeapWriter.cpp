@@ -42,6 +42,7 @@
 #include "oops/typeArrayOop.hpp"
 #include "runtime/java.hpp"
 #include "runtime/mutexLocker.hpp"
+#include "services/heapDumper.hpp"
 #include "utilities/bitMap.inline.hpp"
 #if INCLUDE_G1GC
 #include "gc/g1/g1CollectedHeap.hpp"
@@ -105,6 +106,17 @@ void ArchiveHeapWriter::add_source_obj(oop src_obj) {
 
 void ArchiveHeapWriter::write(GrowableArrayCHeap<oop, mtClassShared>* roots,
                               ArchiveHeapInfo* heap_info) {
+
+  {
+    // lets do a memory dumps
+    int level = -1; // -1 means no compression.
+    uint parallel = HeapDumper::default_num_of_dump_threads();
+    HeapDumper dumper(false); // GC not required
+    outputStream* output = nullptr; // we don't need the additional info
+    dumper.dump("Test", output, level, true, parallel);
+    log_info(cds)("Dump AOT cache: done.");
+  }
+
   assert(CDSConfig::is_dumping_heap(), "sanity");
   allocate_buffer();
   copy_source_objs_to_buffer(roots);

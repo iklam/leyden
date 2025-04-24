@@ -872,6 +872,7 @@ void HeapShared::end_scanning_for_oops() {
 
 void HeapShared::write_heap(ArchiveHeapInfo *heap_info) {
   {
+    MutexLocker ml(DumpTimeTable_lock, Mutex::_no_safepoint_check_flag);
     NoSafepointVerifier nsv;
     if (!SkipArchiveHeapVerification) {
       CDSHeapVerifier::verify();

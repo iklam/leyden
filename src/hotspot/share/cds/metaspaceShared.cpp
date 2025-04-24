@@ -673,6 +673,7 @@ void VM_PopulateDumpSharedSpace::doit() {
 
   NOT_PRODUCT(SystemDictionary::verify();)
 
+ {
   // Block concurrent class unloading from changing the _dumptime_table
   MutexLocker ml(DumpTimeTable_lock, Mutex::_no_safepoint_check_flag);
 
@@ -698,8 +699,11 @@ void VM_PopulateDumpSharedSpace::doit() {
   log_info(cds)("Make classes shareable");
   _builder.make_klasses_shareable();
   MetaspaceShared::make_method_handle_intrinsics_shareable();
-
+ }
+ 
   dump_java_heap_objects();
+
+  MutexLocker ml(DumpTimeTable_lock, Mutex::_no_safepoint_check_flag);
   dump_shared_symbol_table(_builder.symbols());
 
   char* early_serialized_data = dump_early_read_only_tables();

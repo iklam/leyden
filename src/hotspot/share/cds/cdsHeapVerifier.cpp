@@ -241,10 +241,16 @@ public:
           return;
         }
 
-        if (field_ik == vmClasses::internal_Unsafe_klass() && ArchiveUtils::has_aot_initialized_mirror(field_ik)) {
-          // There's only a single instance of jdk/internal/misc/Unsafe, so all references will
-          // be pointing to this singleton, which has been archived.
-          return;
+        if (ArchiveUtils::has_aot_initialized_mirror(field_ik)) {
+          if (field_ik == vmClasses::internal_Unsafe_klass()) {
+            // There's only a single instance of jdk/internal/misc/Unsafe, so all references will
+            // be pointing to this singleton, which has been archived.
+            return;
+          }
+          if (field_ik == vmClasses::Boolean_klass()) {
+            // TODO: check if is TRUE or FALSE
+            return;
+          }
         }
       }
 

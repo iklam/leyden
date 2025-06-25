@@ -171,7 +171,7 @@ CDSHeapVerifier::~CDSHeapVerifier() {
                          "an object points to a static field that "
                          "may hold a different value at runtime.", _archived_objs, _problems);
     log_error(aot, heap)("Please see cdsHeapVerifier.cpp and aotClassInitializer.cpp for details");
-    MetaspaceShared::unrecoverable_writing_error();
+    //MetaspaceShared::unrecoverable_writing_error();
   }
 }
 

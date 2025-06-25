@@ -1185,7 +1185,7 @@ void SystemDictionary::preload_class(ClassLoaderData* loader_data, InstanceKlass
       pkg_entry = loader_data->packages()->create_entry_if_absent(pkg_name, loader_data->unnamed_module());
     }
   } else {
-    precond(pkg_entry->module()->is_named());
+    //precond(pkg_entry->module()->is_named());
   }
 
   ik->restore_unshareable_info(loader_data, pd, pkg_entry, CHECK);

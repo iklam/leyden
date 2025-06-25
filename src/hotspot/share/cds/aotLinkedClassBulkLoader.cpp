@@ -40,6 +40,7 @@
 #include "classfile/classLoader.hpp"
 #include "classfile/dictionary.hpp"
 #include "classfile/javaClasses.hpp"
+#include "classfile/modules.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/systemDictionaryShared.hpp"
 #include "classfile/vmClasses.hpp"
@@ -103,6 +104,7 @@ bool AOTLinkedClassBulkLoader::has_finished_loading_classes() {
 void AOTLinkedClassBulkLoader::preload_classes(TRAPS) {
   log_info(aot, load)("Start preloading classes");
 
+#if 0
   precond(_platform_loader_root_index >= 0);
   Handle h_platform_loader(THREAD, HeapShared::get_root(_platform_loader_root_index));
   ClassLoaderData* platform_loader_data = SystemDictionary::register_loader(h_platform_loader);
@@ -116,6 +118,14 @@ void AOTLinkedClassBulkLoader::preload_classes(TRAPS) {
   SystemDictionary::set_system_loader(system_loader_data);
   log_info(aot, load)("Restored app loader " INTPTR_FORMAT " (CLD = " INTPTR_FORMAT ")",
                       p2i(h_system_loader()), p2i(system_loader_data));
+#else
+  precond(_platform_loader_root_index >= 0);
+  precond(_system_loader_root_index >= 0);
+
+  Handle h_platform_loader(THREAD, HeapShared::get_root(_platform_loader_root_index));
+  Handle h_system_loader(THREAD, HeapShared::get_root(_system_loader_root_index));
+  Modules::init_archived_modules(THREAD, h_platform_loader, h_system_loader);
+#endif
 
   preload_classes_in_table(AOTLinkedClassTable::for_static_archive()->boot1(), "boot1", Handle(), THREAD);
   preload_classes_in_table(AOTLinkedClassTable::for_static_archive()->boot2(), "boot2", Handle(), THREAD);
@@ -215,6 +225,7 @@ void AOTLinkedClassBulkLoader::restore_module(Klass* k, const char* category_nam
     ResourceMark rm;
     log_debug(aot, load)("Restore module %-5s %s", category_name, k->external_name());
   }
+  //precond(java_lang_Class::module(k->java_mirror()) == module_oop);
   java_lang_Class::set_module(k->java_mirror(), module_oop);
 
   ArrayKlass* ak = k->array_klass_or_null();

@@ -788,6 +788,10 @@ static void copy_java_mirror_hashcode(oop orig_mirror, oop scratch_m) {
     DEBUG_ONLY(intptr_t archived_hash = scratch_m->identity_hash());
     assert(src_hash == archived_hash, "Different hash codes: original " INTPTR_FORMAT ", archived " INTPTR_FORMAT, src_hash, archived_hash);
   }
+
+  if (CDSConfig::is_dumping_aot_linked_classes()) {
+    //java_lang_Class::set_module(scratch_m, java_lang_Class::module(orig_mirror));
+  }
 }
 
 static objArrayOop get_archived_resolved_references(InstanceKlass* src_ik) {

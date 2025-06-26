@@ -225,8 +225,8 @@ void AOTLinkedClassBulkLoader::restore_module(Klass* k, const char* category_nam
     ResourceMark rm;
     log_debug(aot, load)("Restore module %-5s %s", category_name, k->external_name());
   }
-  //precond(java_lang_Class::module(k->java_mirror()) == module_oop);
-  java_lang_Class::set_module(k->java_mirror(), module_oop);
+  precond(java_lang_Class::module(k->java_mirror()) == module_oop);
+  //java_lang_Class::set_module(k->java_mirror(), module_oop);
 
   ArrayKlass* ak = k->array_klass_or_null();
   while (ak != nullptr) {

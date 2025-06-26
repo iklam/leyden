@@ -790,7 +790,7 @@ static void copy_java_mirror_hashcode(oop orig_mirror, oop scratch_m) {
   }
 
   if (CDSConfig::is_dumping_aot_linked_classes()) {
-    //java_lang_Class::set_module(scratch_m, java_lang_Class::module(orig_mirror));
+    java_lang_Class::set_module(scratch_m, java_lang_Class::module(orig_mirror));
   }
 }
 

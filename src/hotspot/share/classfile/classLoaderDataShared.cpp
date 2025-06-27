@@ -144,6 +144,9 @@ void ArchivedClassLoaderData::clear_archived_oops() {
     for (int i = 0; i < _modules->length(); i++) {
       _modules->at(i)->clear_archived_oops();
     }
+    if (_unnamed_module != nullptr) {
+      _unnamed_module->clear_archived_oops();
+    }
   }
 }
 
@@ -236,11 +239,6 @@ ModuleEntry* ClassLoaderDataShared::archived_unnamed_module(ClassLoaderData* loa
     }
   }
 
-  if (archived_module != nullptr) {
-    archived_module->load_from_archive(loader_data);
-    archived_module->restore_archived_oops(loader_data);
-  }
-
   return archived_module;
 }
 
@@ -250,6 +248,10 @@ void ClassLoaderDataShared::clear_archived_oops() {
   _archived_boot_loader_data.clear_archived_oops();
   _archived_platform_loader_data.clear_archived_oops();
   _archived_system_loader_data.clear_archived_oops();
+  if (_platform_loader_root_index >= 0) {
+    HeapShared::clear_root(_platform_loader_root_index);
+    HeapShared::clear_root(_system_loader_root_index);
+  }
 }
 
 // Must be done before ClassLoader::create_javabase()

@@ -219,7 +219,7 @@ typedef ResourceHashtable<
 static ArchivedPackageEntries* _archived_packages_entries = nullptr;
 
 bool PackageEntry::should_be_archived() const {
-  // We don't archive unnamed modules, or packages in unnamed modules. They will be
+  // We don't archive packages in unnamed modules --  (FIXME -- why). They will be
   // created on-demand at runtime as classes in such packages are loaded.
   return module()->should_be_archived() && module()->is_named();
 }

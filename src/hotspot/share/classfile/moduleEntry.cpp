@@ -323,8 +323,8 @@ ModuleEntry* ModuleEntry::create_unnamed_module(ClassLoaderData* cld) {
 #if INCLUDE_CDS_JAVA_HEAP
   ModuleEntry* archived_unnamed_module = ClassLoaderDataShared::archived_unnamed_module(cld);
   if (archived_unnamed_module != nullptr) {
-    precond(module == archived_unnamed_module->module());
-    precond(java_lang_Module::module_entry(module) == archived_unnamed_module);
+    archived_unnamed_module->load_from_archive(cld);
+    archived_unnamed_module->restore_archived_oops(cld);
     return archived_unnamed_module;
   }
 #endif
@@ -348,6 +348,9 @@ ModuleEntry* ModuleEntry::create_boot_unnamed_module(ClassLoaderData* cld) {
 #if INCLUDE_CDS_JAVA_HEAP
   ModuleEntry* archived_unnamed_module = ClassLoaderDataShared::archived_boot_unnamed_module();
   if (archived_unnamed_module != nullptr) {
+    archived_unnamed_module->load_from_archive(cld);
+    // It's too early to call archived_unnamed_module->restore_archived_oops(cld).
+    // We will do it inside Modules::set_bootloader_unnamed_module()
     return archived_unnamed_module;
   }
 #endif

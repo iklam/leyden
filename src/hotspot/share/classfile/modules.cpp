@@ -793,7 +793,6 @@ void Modules::set_bootloader_unnamed_module(Handle module, TRAPS) {
 #if INCLUDE_CDS_JAVA_HEAP
   if (CDSConfig::is_using_full_module_graph()) {
     precond(unnamed_module == ClassLoaderDataShared::archived_boot_unnamed_module());
-    unnamed_module->load_from_archive(boot_loader_data);
     unnamed_module->restore_archived_oops(boot_loader_data);
   } else
 #endif

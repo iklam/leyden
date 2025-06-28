@@ -1178,15 +1178,8 @@ void SystemDictionary::preload_class(ClassLoaderData* loader_data, InstanceKlass
 
   Handle pd(THREAD, java_lang_Class::protection_domain(java_mirror));
   PackageEntry* pkg_entry = ik->package();
-  if (pkg_entry == nullptr) {
-    TempNewSymbol pkg_name = ClassLoader::package_from_class_name(ik->name());
-    if (pkg_name != nullptr) {
-      // Only packages of unnamed modules are not archived.
-      pkg_entry = loader_data->packages()->create_entry_if_absent(pkg_name, loader_data->unnamed_module());
-    }
-  } else {
-    //precond(pkg_entry->module()->is_named());
-  }
+  assert(pkg_entry != nullptr || ClassLoader::package_from_class_name(ik->name()) == nullptr,
+         "non-empty packages must have been archived");
 
   ik->restore_unshareable_info(loader_data, pd, pkg_entry, CHECK);
   load_shared_class_misc(ik, loader_data);
@@ -1196,8 +1189,7 @@ void SystemDictionary::preload_class(ClassLoaderData* loader_data, InstanceKlass
     update_dictionary(THREAD, ik, loader_data);
   }
 
-  // java_lang_Class::module(java_mirror) will be restored in
-  // AOTLinkedClassBulkLoader::restore_module_of_preloaded_classes
+  assert(java_lang_Class::module(java_mirror) != nullptr, "must have been archived");
   assert(ik->is_loaded(), "Must be in at least loaded state");
 }
 

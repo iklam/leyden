@@ -1006,6 +1006,15 @@ void java_lang_Class::initialize_mirror_fields(Klass* k,
 
 // Set the java.lang.Module module field in the java_lang_Class mirror
 void java_lang_Class::set_mirror_module_field(JavaThread* current, Klass* k, Handle mirror, Handle module) {
+  if (CDSConfig::is_using_preloaded_classes()) {
+    oop archived_module = java_lang_Class:: module(mirror());
+    if (archived_module != nullptr) {
+      precond(module() == nullptr || module() == archived_module);
+      precond(MetaspaceShared::is_shared_static((void*)k));
+      return;
+    }
+  }
+
   if (module.is_null()) {
     // During startup, the module may be null only if java.base has not been defined yet.
     // Put the class on the fixup_module_list to patch later when the java.lang.Module
@@ -1017,12 +1026,10 @@ void java_lang_Class::set_mirror_module_field(JavaThread* current, Klass* k, Han
       MutexLocker m1(current, Module_lock);
       // Keep list of classes needing java.base module fixup
       if (!ModuleEntryTable::javabase_defined()) {
-        if (!(CDSConfig::is_using_preloaded_classes() && MetaspaceShared::is_shared_static((void*)k))) {
-          assert(k->java_mirror() != nullptr, "Class's mirror is null");
-          k->class_loader_data()->inc_keep_alive_ref_count();
-          assert(fixup_module_field_list() != nullptr, "fixup_module_field_list not initialized");
-          fixup_module_field_list()->push(k);
-        }
+        assert(k->java_mirror() != nullptr, "Class's mirror is null");
+        k->class_loader_data()->inc_keep_alive_ref_count();
+        assert(fixup_module_field_list() != nullptr, "fixup_module_field_list not initialized");
+        fixup_module_field_list()->push(k);
       } else {
         javabase_was_defined = true;
       }
@@ -1036,8 +1043,6 @@ void java_lang_Class::set_mirror_module_field(JavaThread* current, Klass* k, Han
       Handle javabase_handle(current, javabase_entry->module());
       set_module(mirror(), javabase_handle());
     }
-  } else if (CDSConfig::is_using_preloaded_classes() && MetaspaceShared::is_shared_static((void*)k) && !Universe::is_module_initialized()) {
-    // Do nothing. The module will be set later by AOTLinkedClassBulkLoader::restore_module_of_preloaded_classes().
   } else {
     assert(Universe::is_module_initialized() ||
            (ModuleEntryTable::javabase_defined() &&

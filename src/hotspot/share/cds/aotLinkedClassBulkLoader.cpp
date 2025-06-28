@@ -104,7 +104,8 @@ bool AOTLinkedClassBulkLoader::has_finished_loading_classes() {
 void AOTLinkedClassBulkLoader::preload_classes(TRAPS) {
   log_info(aot, load)("Start preloading classes");
 
-#if 0
+#if 0 // FIXME -- move to classLoaderDataShared.cpp
+
   precond(_platform_loader_root_index >= 0);
   Handle h_platform_loader(THREAD, HeapShared::get_root(_platform_loader_root_index));
   ClassLoaderData* platform_loader_data = SystemDictionary::register_loader(h_platform_loader);
@@ -180,24 +181,25 @@ void AOTLinkedClassBulkLoader::preload_classes_in_table(Array<InstanceKlass*>* c
   }
 }
 
-void AOTLinkedClassBulkLoader::restore_module_of_preloaded_classes() {
+#ifdef ASSERT
+void AOTLinkedClassBulkLoader::validate_module_of_preloaded_classes() {
   oop javabase_module_oop = ModuleEntryTable::javabase_moduleEntry()->module();
   for (int i = T_BOOLEAN; i < T_LONG+1; i++) {
     TypeArrayKlass* tak = Universe::typeArrayKlass((BasicType)i);
-    restore_module(tak, "boot1", javabase_module_oop);
+    validate_module(tak, "boot1", javabase_module_oop);
   }
 
   JavaThread* current = JavaThread::current();
   Handle h_platform_loader(current, SystemDictionary::java_platform_loader());
   Handle h_system_loader(current, SystemDictionary::java_system_loader());
 
-  restore_module_of_preloaded_classes_in_table(AOTLinkedClassTable::for_static_archive()->boot1(), "boot1", Handle());
-  restore_module_of_preloaded_classes_in_table(AOTLinkedClassTable::for_static_archive()->boot2(), "boot2", Handle());
-  restore_module_of_preloaded_classes_in_table(AOTLinkedClassTable::for_static_archive()->platform(), "plat", h_platform_loader);
-  restore_module_of_preloaded_classes_in_table(AOTLinkedClassTable::for_static_archive()->app(), "app", h_system_loader);
+  validate_module_of_preloaded_classes_in_table(AOTLinkedClassTable::for_static_archive()->boot1(), "boot1", Handle());
+  validate_module_of_preloaded_classes_in_table(AOTLinkedClassTable::for_static_archive()->boot2(), "boot2", Handle());
+  validate_module_of_preloaded_classes_in_table(AOTLinkedClassTable::for_static_archive()->platform(), "plat", h_platform_loader);
+  validate_module_of_preloaded_classes_in_table(AOTLinkedClassTable::for_static_archive()->app(), "app", h_system_loader);
 }
 
-void AOTLinkedClassBulkLoader::restore_module_of_preloaded_classes_in_table(Array<InstanceKlass*>* classes,
+void AOTLinkedClassBulkLoader::validate_module_of_preloaded_classes_in_table(Array<InstanceKlass*>* classes,
                                                                             const char* category_name, Handle loader) {
   if (classes == nullptr) {
     return;
@@ -214,30 +216,30 @@ void AOTLinkedClassBulkLoader::restore_module_of_preloaded_classes_in_table(Arra
       module_oop = pkg_entry->module()->module();
     }
 
-    restore_module(ik, category_name, module_oop);
+    validate_module(ik, category_name, module_oop);
   }
 }
 
-void AOTLinkedClassBulkLoader::restore_module(Klass* k, const char* category_name, oop module_oop) {
+void AOTLinkedClassBulkLoader::validate_module(Klass* k, const char* category_name, oop module_oop) {
   assert(module_oop != nullptr, "module system must have been initialized");
 
-  if (log_is_enabled(Debug, aot, load)) {
+  if (log_is_enabled(Debug, aot, module)) {
     ResourceMark rm;
-    log_debug(aot, load)("Restore module %-5s %s", category_name, k->external_name());
+    log_debug(aot, module)("Validate module of %-5s %s", category_name, k->external_name());
   }
   precond(java_lang_Class::module(k->java_mirror()) == module_oop);
-  //java_lang_Class::set_module(k->java_mirror(), module_oop);
 
   ArrayKlass* ak = k->array_klass_or_null();
   while (ak != nullptr) {
-    if (log_is_enabled(Debug, aot, load)) {
+    if (log_is_enabled(Debug, aot, module)) {
       ResourceMark rm;
-      log_debug(aot, load)("Restore module %-5s %s", category_name, ak->external_name());
+      log_debug(aot, module)("Validate module of %-5s %s", category_name, ak->external_name());
     }
-    java_lang_Class::set_module(ak->java_mirror(), module_oop);
+    precond(java_lang_Class::module(ak->java_mirror()) == module_oop);
     ak = ak->array_klass_or_null();
   }
 }
+#endif
 
 void AOTLinkedClassBulkLoader::load_javabase_classes(JavaThread* current) {
   assert(CDSConfig::is_using_aot_linked_classes(), "sanity");
@@ -247,7 +249,7 @@ void AOTLinkedClassBulkLoader::load_javabase_classes(JavaThread* current) {
 void AOTLinkedClassBulkLoader::load_non_javabase_classes(JavaThread* current) {
   assert(CDSConfig::is_using_aot_linked_classes(), "sanity");
 
-  restore_module_of_preloaded_classes();
+  DEBUG_ONLY(validate_module_of_preloaded_classes());
 
   // is_using_aot_linked_classes() requires is_using_full_module_graph(). As a result,
   // the platform/system class loader should already have been initialized as part

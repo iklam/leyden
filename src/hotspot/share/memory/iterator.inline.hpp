@@ -27,7 +27,6 @@
 
 #include "memory/iterator.hpp"
 
-#include "cds/aotLinkedClassBulkLoader.hpp"
 #include "classfile/classLoaderData.hpp"
 #include "code/nmethod.hpp"
 #include "oops/access.inline.hpp"

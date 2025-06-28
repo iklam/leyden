@@ -51,10 +51,6 @@ class AOTLinkedClassBulkLoader :  AllStatic {
 
   static void preload_classes_in_table(Array<InstanceKlass*>* classes,
                                        const char* category_name, Handle loader, TRAPS);
-  static void restore_module_of_preloaded_classes();
-  static void restore_module_of_preloaded_classes_in_table(Array<InstanceKlass*>* classes,
-                                                           const char* category_name, Handle loader);
-  static void restore_module(Klass* k, const char* category_name, oop module_oop);
   static void load_classes_in_loader(JavaThread* current, AOTLinkedClassCategory class_category, oop class_loader_oop);
   static void load_classes_in_loader_impl(AOTLinkedClassCategory class_category, oop class_loader_oop, TRAPS);
   static void load_table(AOTLinkedClassTable* table, AOTLinkedClassCategory class_category, Handle loader, TRAPS);
@@ -64,6 +60,14 @@ class AOTLinkedClassBulkLoader :  AllStatic {
   static void load_hidden_class(ClassLoaderData* loader_data, InstanceKlass* ik, TRAPS);
   static void init_required_classes_for_loader(Handle class_loader, Array<InstanceKlass*>* classes, TRAPS);
   static void replay_training_at_init(Array<InstanceKlass*>* classes, TRAPS) NOT_CDS_RETURN;
+
+#ifdef ASSERT
+  static void validate_module_of_preloaded_classes();
+  static void validate_module_of_preloaded_classes_in_table(Array<InstanceKlass*>* classes,
+                                                            const char* category_name, Handle loader);
+  static void validate_module(Klass* k, const char* category_name, oop module_oop);
+#endif
+
 public:
   static void init_archived_loader_indices() NOT_CDS_RETURN;
   static void serialize(SerializeClosure* soc, bool is_static_archive) NOT_CDS_RETURN;

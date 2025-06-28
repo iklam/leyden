@@ -30,6 +30,7 @@
 #include "classfile/packageEntry.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "logging/log.hpp"
+#include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/array.hpp"
 #include "oops/symbol.hpp"
@@ -219,9 +220,7 @@ typedef ResourceHashtable<
 static ArchivedPackageEntries* _archived_packages_entries = nullptr;
 
 bool PackageEntry::should_be_archived() const {
-  // We don't archive packages in unnamed modules --  (FIXME -- why). They will be
-  // created on-demand at runtime as classes in such packages are loaded.
-  return module()->should_be_archived() && module()->is_named();
+  return module()->should_be_archived();
 }
 
 PackageEntry* PackageEntry::allocate_archived_entry() const {
@@ -264,9 +263,10 @@ void PackageEntry::init_as_archived_entry() {
   ArchivePtrMarker::mark_pointer((address*)&_module);
   ArchivePtrMarker::mark_pointer((address*)&_qualified_exports);
 
-  if (log_is_enabled(Info, aot, package)) {
-    ResourceMark rm;
-    log_info(aot, package)("archived %s", (_name == nullptr) ? "(unnamed)" : _name->as_C_string());
+  LogStreamHandle(Info, aot, package) st;
+  if (st.is_enabled()) {
+    st.print("archived ");
+    print(&st);
   }
 }
 

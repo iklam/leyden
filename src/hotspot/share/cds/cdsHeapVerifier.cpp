@@ -146,7 +146,7 @@ CDSHeapVerifier::CDSHeapVerifier() : _archived_objs(0), _problems(0)
                                                           "ZERO");                 // D
   }
 
-  if (CDSConfig::is_dumping_packages()) {
+  if (CDSConfig::is_dumping_aot_linked_classes()) {
     ADD_EXCL("java/lang/Package$VersionInfo",             "NULL_VERSION_INFO");    // D
   }
 

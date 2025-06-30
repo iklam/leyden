@@ -340,9 +340,9 @@ void ArchiveHeapWriter::copy_source_objs_to_buffer(GrowableArrayCHeap<oop, mtCla
 
   log_info(aot)("Size of heap region = %zu bytes, %d objects, %d roots, %d native ptrs",
                 _buffer_used, _source_objs->length() + 1, roots->length(), _num_native_ptrs);
-  log_info(cds)("   strings            = %8zu (%zu bytes)", _num_strings, _string_bytes);
-  log_info(cds)("   packages           = %8zu", _num_packages);
-  log_info(cds)("   protection domains = %8zu", _num_protection_domains);
+  log_info(aot)("   strings            = %8zu (%zu bytes)", _num_strings, _string_bytes);
+  log_info(aot)("   packages           = %8zu", _num_packages);
+  log_info(aot)("   protection domains = %8zu", _num_protection_domains);
 }
 
 size_t ArchiveHeapWriter::filler_array_byte_size(int length) {

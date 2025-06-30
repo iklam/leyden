@@ -24,7 +24,7 @@
 
 /*
  * @test
- * @requires vm.cds.write.archived.java.heap
+ * @requires vm.cds.supports.aot.class.linking
  * @library /test/jdk/lib/testlibrary /test/lib
  *          /test/hotspot/jtreg/runtime/cds/appcds/test-classes
  * @build ArchivedPackages
@@ -62,8 +62,7 @@ public class ArchivedPackages {
         public String[] vmArgs(RunMode runMode) {
             return new String[] {
                 "-Dcds.debug.archived.packages=true",
-                "-XX:+AOTClassLinking",
-                "-XX:+ArchivePackages"
+                "-XX:+AOTClassLinking"
             };
         }
 

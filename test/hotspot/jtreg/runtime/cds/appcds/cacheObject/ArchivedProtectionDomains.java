@@ -24,7 +24,7 @@
 
 /*
  * @test
- * @requires vm.cds.write.archived.java.heap
+ * @requires vm.cds.supports.aot.class.linking
  * @library /test/jdk/lib/testlibrary /test/lib
  *          /test/hotspot/jtreg/runtime/cds/appcds/test-classes
  * @build ArchivedProtectionDomains
@@ -67,9 +67,7 @@ public class ArchivedProtectionDomains {
         public String[] vmArgs(RunMode runMode) {
             String[] args = StringArrayUtils.concat(
                 "-Dcds.debug.archived.protection.domains=true",
-                "-XX:+AOTClassLinking",
-                "-XX:+ArchiveProtectionDomains",
-                "-Xlog:cds+protectiondomain");
+                "-XX:+AOTClassLinking");
             return args;
         }
 

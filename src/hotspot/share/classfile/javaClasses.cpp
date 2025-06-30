@@ -1156,11 +1156,7 @@ void java_lang_Class::create_mirror(Klass* k, Handle class_loader,
       release_set_array_klass(comp_mirror(), k);
     }
     if (CDSConfig::is_dumping_heap()) {
-      if (CDSConfig::is_dumping_protection_domains()) {
-        create_scratch_mirror(k, protection_domain, CHECK);
-      } else {
-        create_scratch_mirror(k, Handle() /* null protection_domain*/, CHECK);
-      }
+      create_scratch_mirror(k, Handle() /* null protection_domain*/, CHECK);
     }
   } else {
     assert(!CDSConfig::is_using_preloaded_classes(), "should not come here");

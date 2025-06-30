@@ -2599,7 +2599,7 @@ public abstract class ClassLoader {
             reinitObjectField("parallelLockMap", new ConcurrentHashMap<>());
         }
 
-        if (CDS.isDumpingPackages()) {
+        if (CDS.isDumpingAOTLinkedClasses()) {
             if (System.getProperty("cds.debug.archived.packages") != null) {
                 for (Map.Entry<String, NamedPackage> entry : packages.entrySet()) {
                     String key = entry.getKey();

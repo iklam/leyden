@@ -230,7 +230,7 @@ public class SecureClassLoader extends ClassLoader {
      * Called by the VM, during -Xshare:dump
      */
     private void resetArchivedStates() {
-        if (CDS.isDumpingProtectionDomains()) {
+        if (CDS.isDumpingAOTLinkedClasses()) {
             if (System.getProperty("cds.debug.archived.protection.domains") != null) {
                 for (Map.Entry<CodeSourceKey, ProtectionDomain> entry : pdcache.entrySet()) {
                     CodeSourceKey key = entry.getKey();

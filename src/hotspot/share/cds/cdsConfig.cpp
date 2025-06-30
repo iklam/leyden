@@ -57,9 +57,6 @@ bool CDSConfig::_has_aot_linked_classes = false;
 bool CDSConfig::_has_preloaded_classes = false;
 bool CDSConfig::_is_single_command_training = false;
 bool CDSConfig::_has_temp_aot_config_file = false;
-bool CDSConfig::_is_loading_packages = false;
-bool CDSConfig::_is_loading_protection_domains = false;
-bool CDSConfig::_is_security_manager_allowed = false;
 bool CDSConfig::_old_cds_flags_used = false;
 bool CDSConfig::_new_aot_flags_used = false;
 bool CDSConfig::_experimental_leyden_flags_used = false;
@@ -74,15 +71,14 @@ JavaThread* CDSConfig::_dumper_thread = nullptr;
 
 int CDSConfig::get_status() {
   assert(Universe::is_fully_initialized(), "status is finalized only after Universe is initialized");
-  return (is_dumping_archive()              ? IS_DUMPING_ARCHIVE : 0) |
+  return (is_dumping_aot_linked_classes()   ? IS_DUMPING_AOT_LINKED_CLASSES : 0) |
+         (is_dumping_archive()              ? IS_DUMPING_ARCHIVE : 0) |
          (is_dumping_method_handles()       ? IS_DUMPING_METHOD_HANDLES : 0) |
          (is_dumping_static_archive()       ? IS_DUMPING_STATIC_ARCHIVE : 0) |
          (is_logging_lambda_form_invokers() ? IS_LOGGING_LAMBDA_FORM_INVOKERS : 0) |
          (is_using_archive()                ? IS_USING_ARCHIVE : 0) |
          (is_dumping_heap()                 ? IS_DUMPING_HEAP : 0) |
-         (is_logging_dynamic_proxies()      ? IS_LOGGING_DYNAMIC_PROXIES : 0) |
-         (is_dumping_packages()             ? IS_DUMPING_PACKAGES : 0) |
-         (is_dumping_protection_domains()   ? IS_DUMPING_PROTECTION_DOMAINS : 0);
+         (is_logging_dynamic_proxies()      ? IS_LOGGING_DYNAMIC_PROXIES : 0);
 }
 
 DEBUG_ONLY(static bool _cds_ergo_initialize_started = false);
@@ -352,13 +348,6 @@ void CDSConfig::check_incompatible_property(const char* key, const char* value) 
       stop_using_full_module_graph();
       aot_log_info(aot)("full module graph: disabled due to incompatible property: %s=%s", key, value);
       break;
-    }
-  }
-
-  // Match the logic in java/lang/System.java, but we need to know this before the System class is initialized.
-  if (strcmp(key, "java.security.manager") == 0) {
-    if (strcmp(value, "disallowed") != 0) {
-      _is_security_manager_allowed = true;
     }
   }
 }
@@ -731,16 +720,12 @@ bool CDSConfig::check_vm_args_consistency(bool patch_mod_javabase, bool mode_fla
     FLAG_SET_ERGO_IF_DEFAULT(AOTInvokeDynamicLinking, true);
     FLAG_SET_ERGO_IF_DEFAULT(ArchiveDynamicProxies, true);
     FLAG_SET_ERGO_IF_DEFAULT(ArchiveLoaderLookupCache, true);
-    FLAG_SET_ERGO_IF_DEFAULT(ArchivePackages, true);
-    FLAG_SET_ERGO_IF_DEFAULT(ArchiveProtectionDomains, true);
     FLAG_SET_ERGO_IF_DEFAULT(ArchiveReflectionData, true);
   } else {
     // All of these *might* depend on AOTClassLinking. Better be safe than sorry.
     FLAG_SET_ERGO(AOTInvokeDynamicLinking, false);
     FLAG_SET_ERGO(ArchiveDynamicProxies, false);
     FLAG_SET_ERGO(ArchiveLoaderLookupCache, false);
-    FLAG_SET_ERGO(ArchivePackages, false);
-    FLAG_SET_ERGO(ArchiveProtectionDomains, false);
     FLAG_SET_ERGO(ArchiveReflectionData, false);
 
     if (CDSConfig::is_dumping_archive()) {
@@ -906,8 +891,6 @@ bool CDSConfig::setup_experimental_leyden_workflow(bool xshare_auto_cmd_line) {
       log_info(cds)("full module graph: disabled when writing CDS preimage");
       disable_heap_dumping();
       stop_dumping_full_module_graph();
-      FLAG_SET_ERGO(ArchivePackages, false);
-      FLAG_SET_ERGO(ArchiveProtectionDomains, false);
       FLAG_SET_ERGO_IF_DEFAULT(AOTRecordTraining, true);
       _is_dumping_static_archive = true;
       _is_dumping_preimage_static_archive = true;
@@ -1226,32 +1209,6 @@ bool CDSConfig::is_dumping_invokedynamic() {
   // Requires is_dumping_aot_linked_classes(). Otherwise the classes of some archived heap
   // objects used by the archive indy callsites may be replaced at runtime.
   return AOTInvokeDynamicLinking && is_dumping_aot_linked_classes() && is_dumping_heap();
-}
-
-bool CDSConfig::is_dumping_packages() {
-  return ArchivePackages && is_dumping_heap();
-}
-
-bool CDSConfig::is_loading_packages() {
-  return UseSharedSpaces && is_using_full_module_graph() && _is_loading_packages;
-}
-
-bool CDSConfig::is_dumping_protection_domains() {
-  if (_is_security_manager_allowed) {
-    // For sanity, don't archive PDs. TODO: can this be relaxed?
-    return false;
-  }
-  // Archived PDs for the modules will reference their java.lang.Module, which must
-  // also be archived.
-  return ArchiveProtectionDomains && is_dumping_full_module_graph();
-}
-
-bool CDSConfig::is_loading_protection_domains() {
-  if (_is_security_manager_allowed) {
-    // For sanity, don't used any archived PDs. TODO: can this be relaxed?
-    return false;
-  }
-  return UseSharedSpaces && is_using_full_module_graph() && _is_loading_protection_domains;
 }
 
 bool CDSConfig::is_dumping_reflection_data() {

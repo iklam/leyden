@@ -279,6 +279,9 @@ void Compiler::compile_method(ciEnv* env, ciMethod* method, int entry_bci, bool 
     // of Compilation to occur before we release the any
     // competing compiler thread
     ResourceMark rm;
+    //if (method->get_Method()->name()->equals("toPackage")) {
+    //  tty->print_cr("Hello");
+    //}
     Compilation c(this, env, method, entry_bci, buffer_blob, install_code, directive);
   }
 }

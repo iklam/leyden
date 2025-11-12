@@ -1202,10 +1202,6 @@ void AOTMetaspace::dump_static_archive_impl(StaticArchiveBuilder& builder, TRAPS
 
   if (CDSConfig::is_dumping_final_static_archive()) {
     if (AOTCodeCache::is_caching_enabled()) {
-      if (log_is_enabled(Info, cds, jit)) {
-        AOTCacheAccess::test_heap_access_api();
-      }
-
       // We have just created the final image. Let's run the AOT compiler
       if (AOTPrintTrainingInfo) {
         tty->print_cr("==================== archived_training_data ** after dumping ====================");

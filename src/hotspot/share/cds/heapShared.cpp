@@ -461,14 +461,6 @@ int HeapShared::append_root(oop obj) {
   return _pending_roots->append(oh);
 }
 
-// Only java mirrors can have scratch objects.
-oop HeapShared::orig_to_scratch_object(oop orig_obj) {
-  if (java_lang_Class::is_instance(orig_obj)) {
-    return scratch_java_mirror(orig_obj);
-  }
-  return nullptr;
-}
-
 // Permanent oops are used to support AOT-compiled methods, which may have in-line references
 // to Strings and MH oops.
 //
@@ -516,9 +508,8 @@ int HeapShared::get_archived_object_permanent_index(oop obj) {
     return -1;
   }
 
-  oop scratch = orig_to_scratch_object(obj);
-  if (scratch != nullptr) {
-    obj = scratch;
+  if (java_lang_Class::is_instance(obj)) {
+    obj = scratch_java_mirror(obj);
   }
 
   OopHandle tmp(&obj);

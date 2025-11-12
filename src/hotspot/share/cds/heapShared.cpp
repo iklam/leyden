@@ -461,34 +461,10 @@ int HeapShared::append_root(oop obj) {
   return _pending_roots->append(oh);
 }
 
-class OrigToScratchObjectTable: public HashTable<OopHandle, OopHandle,
-    36137, // prime number
-    AnyObj::C_HEAP,
-    mtClassShared,
-    HeapShared::oop_handle_hash,
-    HeapShared::oop_handle_equals> {};
-
-static OrigToScratchObjectTable* _orig_to_scratch_object_table = nullptr;
-
-void HeapShared::track_scratch_object(oop orig_obj, oop scratch_obj) {
-  MutexLocker ml(ArchivedObjectTables_lock, Mutex::_no_safepoint_check_flag);
-  if (_orig_to_scratch_object_table == nullptr) {
-    _orig_to_scratch_object_table = new (mtClass)OrigToScratchObjectTable();
-  }
-
-  OopHandle orig_h(Universe::vm_global(), orig_obj);
-  OopHandle scratch_h(Universe::vm_global(), scratch_obj);
-  _orig_to_scratch_object_table->put_when_absent(orig_h, scratch_h);
-}
-
+// Only java mirrors can have scratch objects.
 oop HeapShared::orig_to_scratch_object(oop orig_obj) {
-  MutexLocker ml(ArchivedObjectTables_lock, Mutex::_no_safepoint_check_flag);
-  if (_orig_to_scratch_object_table != nullptr) {
-    OopHandle orig(&orig_obj);
-    OopHandle* v = _orig_to_scratch_object_table->get(orig);
-    if (v != nullptr) {
-      return v->resolve();
-    }
+  if (java_lang_Class::is_instance(orig_obj)) {
+    return scratch_java_mirror(orig_obj);
   }
   return nullptr;
 }
@@ -540,12 +516,9 @@ int HeapShared::get_archived_object_permanent_index(oop obj) {
     return -1;
   }
 
-  if (_orig_to_scratch_object_table != nullptr) {
-    OopHandle orig(&obj);
-    OopHandle* v = _orig_to_scratch_object_table->get(orig);
-    if (v != nullptr) {
-      obj = v->resolve();
-    }
+  oop scratch = orig_to_scratch_object(obj);
+  if (scratch != nullptr) {
+    obj = scratch;
   }
 
   OopHandle tmp(&obj);
@@ -799,7 +772,6 @@ void HeapShared::init_scratch_objects_for_basic_type_mirrors(TRAPS) {
     if (!is_reference_type(bt)) {
       oop m = java_lang_Class::create_basic_type_mirror(type2name(bt), bt, CHECK);
       _scratch_basic_type_mirrors[i] = OopHandle(Universe::vm_global(), m);
-      track_scratch_object(Universe::java_mirror(bt), m);
     }
   }
 }
@@ -840,7 +812,6 @@ oop HeapShared::scratch_java_mirror(Klass* k) {
 }
 
 void HeapShared::set_scratch_java_mirror(Klass* k, oop mirror) {
-  track_scratch_object(k->java_mirror(), mirror);
   _scratch_objects_table->set_oop(k, mirror);
 }
 
@@ -855,15 +826,6 @@ void HeapShared::remove_scratch_objects(Klass* k) {
   _scratch_objects_table->remove_oop(k);
   if (k->is_instance_klass()) {
     _scratch_objects_table->remove(InstanceKlass::cast(k)->constants());
-  }
-  if (mirror != nullptr && !UseZGC) { // FIXME: JDK-xxxxxxx
-    OopHandle tmp(&mirror);
-    OopHandle* v = _orig_to_scratch_object_table->get(tmp);
-    if (v != nullptr) {
-      oop scratch_mirror = v->resolve();
-      java_lang_Class::set_klass(scratch_mirror, nullptr);
-      _orig_to_scratch_object_table->remove(tmp);
-    }
   }
 }
 

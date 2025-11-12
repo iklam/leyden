@@ -856,7 +856,7 @@ void HeapShared::remove_scratch_objects(Klass* k) {
   if (k->is_instance_klass()) {
     _scratch_objects_table->remove(InstanceKlass::cast(k)->constants());
   }
-  if (mirror != nullptr) {
+  if (mirror != nullptr && !UseZGC) { // FIXME: JDK-xxxxxxx
     OopHandle tmp(&mirror);
     OopHandle* v = _orig_to_scratch_object_table->get(tmp);
     if (v != nullptr) {

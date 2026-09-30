@@ -191,9 +191,23 @@ public class VerifyAccess {
         if (allowedModes == 0)  return false;
         assert((allowedModes & ~(ALL_ACCESS_MODES|PACKAGE_ALLOWED|MODULE_ALLOWED|UNCONDITIONAL_ALLOWED|ORIGINAL_ALLOWED)) == 0);
 
-        if ((allowedModes & PACKAGE_ALLOWED) != 0 &&
-            isSamePackage(lookupClass, refc))
-            return true;
+        boolean trace = "org.jruby.gen.RubyObject5".equals(refc.getName());
+        if (trace) {
+          System.out.println("Tracing: HERE");
+          System.out.println("Tracing: refc = " + refc);
+          System.out.println("Tracing: lookupClass = " + lookupClass);
+          System.out.println("Tracing: prevLookupClass = " + prevLookupClass);
+          System.out.println("Tracing: allowedModes = " + allowedModes);
+        }
+        if ((allowedModes & PACKAGE_ALLOWED) != 0) {
+            boolean n = isSamePackage(lookupClass, refc);
+            if (trace) {
+                System.out.println("Tracing: isSamePackage = " + n);
+            }
+            if (n) {
+                return true;
+            }
+        }
 
         int mods = getClassModifiers(refc);
         if (isPublic(mods)) {
@@ -210,7 +224,11 @@ public class VerifyAccess {
 
             // allow access to public types in all unconditionally exported packages
             if ((allowedModes & UNCONDITIONAL_ALLOWED) != 0) {
-                return refModule.isExported(refc.getPackageName());
+                boolean n = refModule.isExported(refc.getPackageName());
+                if (trace) {
+                    System.out.println("Tracing: n = " + n);
+                }
+                return n;
             }
 
             if (lookupModule == refModule && prevLookupClass == null) {
@@ -219,8 +237,12 @@ public class VerifyAccess {
                     return true;
 
                 assert (allowedModes & PUBLIC) != 0;
-                return refModule.isExported(refc.getPackageName());
-            }
+                boolean m = refModule.isExported(refc.getPackageName());
+                if (trace) {
+                    System.out.println("Tracing: m = " + m);
+                }
+                return m;
+             }
 
             // cross-module access
             // 1. refc is in different module from lookupModule, or
@@ -228,13 +250,30 @@ public class VerifyAccess {
             Module prevLookupModule = prevLookupClass != null ? prevLookupClass.getModule()
                                                               : null;
             assert refModule != lookupModule || refModule != prevLookupModule;
-            if (isModuleAccessible(refc, lookupModule, prevLookupModule))
+
+            if (trace) {
+                System.out.println("Tracing: lookupModule = " + lookupModule);
+                System.out.println("Tracing: prevLookupModule = " + prevLookupModule);
+            }
+
+            boolean ma = isModuleAccessible(refc, lookupModule, prevLookupModule);
+            if (trace) {
+                System.out.println("Tracing: ma = " + ma);
+            }
+            if (ma) {
                 return true;
+            }
 
             // public class not accessible to lookupClass
+            if (trace) {
+                System.out.println("Tracing: false 1");
+            }
             return false;
         }
 
+        if (trace) {
+            System.out.println("Tracing: false 2");
+        }
         return false;
     }
 
@@ -247,15 +286,28 @@ public class VerifyAccess {
      * both m1 and m2.
      */
     public static boolean isModuleAccessible(Class<?> refc,  Module m1, Module m2) {
+        boolean trace = "org.jruby.gen.RubyObject5".equals(refc.getName());
         Module refModule = refc.getModule();
         assert refModule != m1 || refModule != m2;
         int mods = getClassModifiers(refc);
         if (isPublic(mods)) {
-            if (m1.canRead(refModule) && (m2 == null || m2.canRead(refModule))) {
+            boolean cr = m1.canRead(refModule);
+            if (trace) {
+                System.out.println("Tracing: cr = " + cr);
+                System.out.println("m1 = " + m1);
+                System.out.println("refModule = " + refModule);
+            }
+            if (cr && (m2 == null || m2.canRead(refModule))) {
                 String pn = refc.getPackageName();
-
+                if (trace) {
+                    System.out.println("Tracing: pn = " + pn);
+                }
                 // refc is exported package to at least both m1 and m2
-                if (refModule.isExported(pn, m1) && (m2 == null || refModule.isExported(pn, m2)))
+                boolean ie = refModule.isExported(pn, m1);
+                if (trace) {
+                    System.out.println("Tracing: ie = " + ie);
+                }
+                if (ie && (m2 == null || refModule.isExported(pn, m2)))
                     return true;
             }
         }

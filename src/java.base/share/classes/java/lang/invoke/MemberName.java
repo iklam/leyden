@@ -904,6 +904,7 @@ final class MemberName implements Member, Cloneable {
                 }
             }
         }
+        new Throwable().printStackTrace(System.out);
         return new IllegalAccessException(message);
     }
     private String message() {

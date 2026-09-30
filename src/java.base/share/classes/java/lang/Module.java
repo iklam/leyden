@@ -440,6 +440,7 @@ public final class Module implements AnnotatedElement {
      * The holder of data structures to support readability, exports, and
      * service use added at runtime with the reflective APIs.
      */
+    @AOTSafeClassInitializer
     private static class ReflectionData {
         /**
          * A module (1st key) reads another module (2nd key)
@@ -503,11 +504,19 @@ public final class Module implements AnnotatedElement {
         if (ReflectionData.reads.containsKeyPair(this, other))
             return true;
 
+        boolean trace = isNamed() && "org.jruby.dist".equals(getName()) && !other.isNamed();
+
         // if other is an unnamed module then check if this module reads
         // all unnamed modules
-        if (!other.isNamed()
-            && ReflectionData.reads.containsKeyPair(this, ALL_UNNAMED_MODULE))
-            return true;
+        if (!other.isNamed()) {
+            boolean ck = ReflectionData.reads.containsKeyPair(this, ALL_UNNAMED_MODULE);
+            if (trace) {
+                System.out.println("Trace: containsKeyPair = " + ck);
+            }
+            if (ck) {
+                return true;
+            }
+        }
 
         return false;
     }
@@ -592,6 +601,10 @@ public final class Module implements AnnotatedElement {
                 }
             }
 
+            boolean trace = isNamed() && "org.jruby.dist".equals(getName()) && (other == ALL_UNNAMED_MODULE);
+            if (trace) {
+                new Throwable().printStackTrace(System.out);
+            }
             // add reflective read
             ReflectionData.reads.putIfAbsent(this, other, Boolean.TRUE);
         }
